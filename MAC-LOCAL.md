@@ -1,5 +1,7 @@
 # Run AccountPilot on your Mac
 
+For the latest account-context update and the recommended no-ZIP workflow, follow [UPDATE-ON-MAC.md](UPDATE-ON-MAC.md). The initial archive instructions below are retained for reference.
+
 This is the existing complete AccountPilot demo, not a rebuild. It includes the dashboard, founder profile, opportunity management, transparent PILOT scoring, action plan, decision journal, fictional examples, and reset.
 
 ## What you need
@@ -68,7 +70,7 @@ Open `http://localhost:3000`. This runs a locally optimized version; it does not
 
 ## 4. Move to a GitHub workflow without future ZIP downloads
 
-The archive deliberately has no `.git` folder. It is a source snapshot, not a Git checkout. The application changes in the Codex workspace have not yet been committed or pushed to GitHub; downloading the current GitHub main branch alone may give you only the original README.
+The archive deliberately has no `.git` folder. It is a source snapshot, not a Git checkout. The original complete demo is saved on `accountpilot-local-demo`, and the account-context update is saved on `accountpilot-context-workspace`. Until the update is merged into `main`, select the update branch when cloning; `main` may still contain only the original README.
 
 The following uses GitHub Desktop to avoid terminal authentication setup. It preserves the existing `oarventures/AccountPilot` repository's history rather than creating a replacement repository.
 
