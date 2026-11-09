@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { actionPlan, Demo, Opportunity, rank, seed } from "@/lib/strategy";
+import ContextWorkspace from "./components/context-workspace";
+import { migrateDemo, saveOpportunity, validContext } from "@/lib/context";
+const freshDemo = () => migrateDemo(seed());
 const KEY = "accountpilot.demo.v1";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -24,11 +27,14 @@ const tabs = [
   "Opportunities",
   "Founder profile",
   "Decision journal",
+  "Solution context",
+  "Accounts & briefs",
 ] as const;
 function validData(value: unknown): value is Demo {
   if (!value || typeof value !== "object") return false;
   const d = value as Demo;
   return (
+    (d.context === undefined || validContext(d.context)) &&
     !!d.profile &&
     ["offering", "buyer"].every(
       (k) => typeof d.profile[k as "offering" | "buyer"] === "string",
@@ -44,6 +50,7 @@ function validData(value: unknown): value is Demo {
       (o) =>
         o &&
         typeof o.id === "string" &&
+        (o.accountId === undefined || typeof o.accountId === "string") &&
         typeof o.company === "string" &&
         typeof o.notes === "string" &&
         ["value", "relationship", "access", "pain", "timing", "effort"].every(
@@ -67,19 +74,20 @@ function validData(value: unknown): value is Demo {
   );
 }
 export default function Home() {
-  const [data, setData] = useState<Demo>(seed);
+  const [data, setData] = useState<Demo>(freshDemo);
   const [ready, setReady] = useState(false);
   const [storageOK, setStorageOK] = useState(true);
   const [message, setMessage] = useState("");
   const [tab, setTab] = useState<(typeof tabs)[number]>("Overview");
   const [editing, setEditing] = useState<Opportunity | null>(null);
+  const [accountFocus, setAccountFocus] = useState<string | undefined>();
   const [expanded, setExpanded] = useState<string | null>(null);
   useEffect(() => {
     try {
       const saved = localStorage.getItem(KEY);
       if (saved) {
         const parsed: unknown = JSON.parse(saved);
-        if (validData(parsed)) setData(parsed);
+        if (validData(parsed)) setData(migrateDemo(parsed));
         else {
           setStorageOK(false);
           setMessage(
@@ -108,15 +116,15 @@ export default function Home() {
     }
   }, [data, ready, storageOK]);
   const ranked = rank(data.opportunities, data.profile);
-  const plan = actionPlan(data.opportunities, data.profile);
+  const plan = actionPlan(data.opportunities, data.profile, data.context);
   const total = data.opportunities.reduce((a, o) => a + o.value, 0);
   function reset() {
     if (
       window.confirm(
-        "Replace all local opportunities, profile changes, and journal entries with fictional examples?",
+        "Replace all local opportunities, account plans, attachments, solution context, profile changes, and journal entries with fictional examples?",
       )
     ) {
-      setData(seed());
+      setData(freshDemo());
       setStorageOK(true);
       setEditing(null);
       setExpanded(null);
@@ -178,7 +186,9 @@ export default function Home() {
                 setEditing(null);
               }}
             >
-              <span aria-hidden="true">{["▦", "◎", "♙", "▤"][i]}</span>
+              <span aria-hidden="true">
+                {["▦", "◎", "♙", "▤", "◇", "▣"][i]}
+              </span>
               {t}
               {t === "Opportunities" && <b>{data.opportunities.length}</b>}
             </button>
@@ -243,7 +253,11 @@ export default function Home() {
                         ? "Compare the possibilities. Invest in the right conversations."
                         : tab === "Founder profile"
                           ? "Give your strategy a clear starting point."
-                          : "Make a decision. Capture the learning. Build better instincts."}
+                          : tab === "Solution context"
+                            ? "Explain your offering so every account decision has a clear foundation."
+                            : tab === "Accounts & briefs"
+                              ? "Connect account evidence, human judgment, and a purposeful next action."
+                              : "Make a decision. Capture the learning. Build better instincts."}
                   </p>
                 </div>
                 {(tab === "Overview" || tab === "Opportunities") && (
@@ -343,15 +357,7 @@ export default function Home() {
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
-                          setData({
-                            ...data,
-                            opportunities: [
-                              ...data.opportunities.filter(
-                                (o) => o.id !== editing.id,
-                              ),
-                              { ...editing, company: editing.company.trim() },
-                            ],
-                          });
+                          setData(saveOpportunity(data, editing));
                           setEditing(null);
                           setMessage(
                             "Opportunity saved. Priorities and the action plan have been updated.",
@@ -359,6 +365,28 @@ export default function Home() {
                         }}
                       >
                         <div className="form-grid">
+                          <label className="full">
+                            Account workspace
+                            <select
+                              aria-label="Account workspace"
+                              value={editing.accountId || ""}
+                              onChange={(e) =>
+                                setEditing({
+                                  ...editing,
+                                  accountId: e.target.value || undefined,
+                                })
+                              }
+                            >
+                              <option value="">
+                                Match company name, or create a new account
+                              </option>
+                              {data.context?.accounts.map((a) => (
+                                <option value={a.id} key={a.id}>
+                                  {a.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                           <label>
                             Company name
                             <input
@@ -586,6 +614,7 @@ export default function Home() {
                                       onClick={() =>
                                         setEditing({
                                           id: o.id,
+                                          accountId: o.accountId,
                                           company: o.company,
                                           value: o.value,
                                           relationship: o.relationship,
@@ -649,6 +678,15 @@ export default function Home() {
                           <p className="notes">
                             Notes: {o.notes || "No supporting notes recorded."}
                           </p>
+                          <button
+                            className="text-button"
+                            onClick={() => {
+                              setAccountFocus(o.accountId);
+                              setTab("Accounts & briefs");
+                            }}
+                          >
+                            Open this account’s plan and evidence
+                          </button>
                         </div>
                       ))}
                     <details className="method">
@@ -723,6 +761,15 @@ export default function Home() {
                       const f = new FormData(e.currentTarget);
                       setData({
                         ...data,
+                        context: data.context
+                          ? {
+                              ...data.context,
+                              accounts: data.context.accounts.map((a) => ({
+                                ...a,
+                                reviewed: "",
+                              })),
+                            }
+                          : undefined,
                         profile: {
                           offering: String(f.get("offering")).trim(),
                           buyer: String(f.get("buyer")).trim(),
@@ -910,6 +957,15 @@ export default function Home() {
                     )}
                   </section>
                 </>
+              )}
+              {(tab === "Solution context" || tab === "Accounts & briefs") && (
+                <ContextWorkspace
+                  data={data}
+                  onChange={setData}
+                  view={tab === "Solution context" ? "solution" : "accounts"}
+                  initialAccount={accountFocus}
+                  onJournal={() => setTab("Decision journal")}
+                />
               )}
               <footer>
                 <span className="brand-footer">AccountPilot</span>

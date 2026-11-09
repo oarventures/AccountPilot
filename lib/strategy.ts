@@ -1,3 +1,4 @@
+import type { Context } from "./context";
 export type Profile = {
   offering: string;
   buyer: string;
@@ -6,6 +7,7 @@ export type Profile = {
   goal: number;
 };
 export type Opportunity = {
+  accountId?: string;
   id: string;
   company: string;
   value: number;
@@ -24,6 +26,7 @@ export type Decision = {
   outcome: string;
 };
 export type Demo = {
+  context?: Context;
   profile: Profile;
   opportunities: Opportunity[];
   journal: Decision[];
@@ -80,33 +83,46 @@ export function rank(opportunities: Opportunity[], profile: Profile) {
         a.id.localeCompare(b.id),
     );
 }
-export function actionPlan(opportunities: Opportunity[], profile: Profile) {
+export function actionPlan(
+  opportunities: Opportunity[],
+  profile: Profile,
+  context?: Context,
+) {
   const top = rank(opportunities, profile)[0];
   if (!top) return [];
+  const account = context?.accounts.find((a) => a.id === top.accountId);
+  const person = account?.people[0];
   const fits =
     profile.capacity > 0 && top.effort > 0 && top.effort <= profile.capacity;
   return [
     {
       week: "01",
       title: "Validate before you pursue",
-      text: `${top.company}: ${top.analysis.gaps[0] ? `resolve this gap — ${top.analysis.gaps[0].toLowerCase()}.` : "confirm the recorded pain and buying process in a discovery conversation."}`,
+      text: account?.nextAction.trim()
+        ? `Founder-entered next action for ${account.name}: ${account.nextAction}`
+        : `${top.company}: ${top.analysis.gaps[0] ? `resolve this gap — ${top.analysis.gaps[0].toLowerCase()}.` : "confirm the recorded pain and buying process in a discovery conversation."}`,
     },
     {
       week: "02",
       title: "Map the people who matter",
-      text: `For ${top.company}, identify the decision maker and ask your contact for a relevant introduction. Record what you learn.`,
+      text: person
+        ? `Founder-entered contact: ${person.name}; role: ${person.role || "unknown"}; relationship path: ${person.path || "unknown"}. Validate authority before outreach.`
+        : `For ${top.company}, identify the decision maker and ask your contact for a relevant introduction. Record what you learn.`,
     },
     {
       week: "03",
       title: fits ? "Agree on a small next step" : "Right-size the commitment",
-      text: fits
-        ? `Propose a focused discovery session for ${top.company}. Validate scope before committing delivery time.`
-        : `${top.company} needs a usable effort estimate within your ${profile.capacity}h capacity. Reduce scope or defer pursuit before making a commitment.`,
+      text:
+        fits && account?.message.trim()
+          ? `Review this founder-entered message hypothesis against the evidence before using it: ${account.message}`
+          : fits
+            ? `Propose a focused discovery session for ${top.company}. Validate scope before committing delivery time.`
+            : `${top.company} needs a usable effort estimate within your ${profile.capacity}h capacity. Reduce scope or defer pursuit before making a commitment.`,
     },
     {
       week: "04",
       title: "Review, decide, and learn",
-      text: `Re-score ${top.company} using new evidence. Record a pursue, nurture, or pause decision and its outcome in your journal.`,
+      text: `Re-score ${top.company} using new evidence. Record a pursue, nurture, or pause decision and its outcome in your journal.${account?.pause.trim() ? ` Founder-entered pause condition: ${account.pause}` : ""}`,
     },
   ];
 }

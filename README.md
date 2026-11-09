@@ -2,6 +2,8 @@
 
 A safe, fictional sales strategy demo for founders of small, relationship-driven B2B businesses. Built with Next.js App Router, TypeScript, React, and Tailwind CSS. No account, database, AI service, payment, scraping, or external integration is implemented.
 
+For the new solution-context, account-plan, and strategic-brief workflow, see [UPDATE-ON-MAC.md](UPDATE-ON-MAC.md). It includes exact steps to move from your old ZIP copy to a GitHub-managed local copy.
+
 ## Run locally
 
 Recommended: Node.js 24 LTS and npm 11 (the tested versions). Next.js requires Node.js 20.9 or newer. See [MAC-LOCAL.md](MAC-LOCAL.md) for beginner-friendly Mac instructions and a GitHub workflow.
@@ -33,7 +35,9 @@ Stop a server with Ctrl+C. No environment variables or secrets are required, so 
 - Expand a company name to inspect its score, rationale, and missing evidence.
 - Review a suggested four-week plan for the highest-ranked opportunity.
 - Record decisions and update their outcomes later.
-- Reset the demo to its four fictional examples. Reset and deletion require confirmation.
+- Maintain solution context and attachments, account-specific research and plans, stakeholder maps, evidence with sources, and founder-reviewed strategic briefs.
+- Link multiple opportunities to an account and capture brief snapshots in the decision journal.
+- Reset the demo to its four fictional examples. Reset removes context and attachments too; reset and deletion require confirmation.
 
 ## How PILOT works
 
@@ -61,7 +65,7 @@ Storage failures show a visible notice; in that case edits remain temporary. Uns
 
 ## Validation and short test plan
 
-`npm test` runs 10 unit tests covering the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
+`npm test` runs 19 unit tests covering context migration, account linking, evidence separation, attachment constraints, contextual action plans, and the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
 
 Manual / browser smoke checklist:
 
@@ -80,3 +84,7 @@ Automated Chromium smoke testing during implementation covered creation, refresh
 ## Next steps
 
 Validate the terminology, weights, and usefulness of the suggested actions with founders using fictional scenarios. Before handling actual customer data, plan privacy, security, authentication, server storage, backup, and data deletion as a separate production project. No paid services or public deployment have been configured.
+
+## Context update checks
+
+In addition to the original smoke checklist, validate legacy storage migration without reset; solution saving; account-specific attachments; documented source/date requirements; exact TXT passage matching; founder interpretations staying separate from evidence; stakeholder capture; strategic brief review and journal snapshots; persistence after refresh; isolation between accounts; and mobile layout. PDF/DOCX content is not parsed or analyzed. Attachments are limited to 350 KB each and 800 KB total. No new environment configuration is required.
