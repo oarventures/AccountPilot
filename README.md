@@ -1,14 +1,16 @@
 # AccountPilot
 
+**Membership update:** [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md) describes server-enforced access, per-user memory, required provider setup, and confidentiality limits. Services are disabled by default. No real customer data or payments should be used before hosted validation.
+
 **Start here:** [START-HERE.md](START-HERE.md). The Mac launchers install/start the demo and update a GitHub clone without repeated terminal commands.
 
-A safe, fictional sales strategy demo for founders of small, relationship-driven B2B businesses. Built with Next.js App Router, TypeScript, React, and Tailwind CSS. No account, database, AI service, payment, scraping, or external integration is implemented.
+A safe, fictional sales strategy demo for founders of small, relationship-driven B2B businesses. Built with Next.js App Router, TypeScript, React, and Tailwind CSS. The fictional demo remains available locally. The membership code adds Supabase Auth/PostgreSQL and Stripe integration; those services are not activated. No live AI or scraping is implemented.
 
 For the new solution-context, account-plan, and strategic-brief workflow, see [UPDATE-ON-MAC.md](UPDATE-ON-MAC.md). It includes exact steps to move from your old ZIP copy to a GitHub-managed local copy.
 
 ## Run locally
 
-Recommended: Node.js 24 LTS and npm 11 (the tested versions). Next.js requires Node.js 20.9 or newer. See [MAC-LOCAL.md](MAC-LOCAL.md) for beginner-friendly Mac instructions and a GitHub workflow.
+Recommended: Node.js 24 LTS and npm 11 (the tested versions). Next.js requires Node.js 22 or newer. See [MAC-LOCAL.md](MAC-LOCAL.md) for beginner-friendly Mac instructions and a GitHub workflow.
 
 ```sh
 cd AccountPilot
@@ -27,7 +29,7 @@ npm run build
 npm start
 ```
 
-Stop a server with Ctrl+C. No environment variables or secrets are required, so there is no `.env.example`.
+Stop a server with Ctrl+C. The fictional local demo needs no secrets (`npm run demo`). Member mode requires the configuration in `.env.example` and provider setup in MEMBERSHIP-SETUP.md. Default `npm run dev` / `npm run launch` now open the locked membership entrance.
 
 ## What you can do
 
@@ -63,13 +65,13 @@ The 30-day plan is a deterministic template for the first-ranked company. It rec
 
 ## Browser storage and safety
 
-All business data is stored in this browser origin’s localStorage under `accountpilot.demo.v1`. The initial data is fictional. Do not enter real user or customer information. There is no server-side business-data storage or transmission. Browser storage is not encrypted, authenticated, backed up, or synchronized. Anyone using the same browser profile can see it. Clearing site data removes it. Another browser, port, or device has separate data.
+In the fictional local demo, business data is stored in this browser origin’s localStorage under `accountpilot.demo.v1`. Member mode instead uses authenticated, per-user database storage as described in MEMBERSHIP-SETUP.md. The initial data is fictional. Do not enter real user or customer information. The local demo has no server-side business-data storage or transmission. Member mode saves data to the configured Supabase project only when requested. Browser storage is not encrypted, authenticated, backed up, or synchronized. Anyone using the same browser profile can see it. Clearing site data removes it. Another browser, port, or device has separate data.
 
 Storage failures show a visible notice; in that case edits remain temporary. Unsupported saved data is not overwritten until an explicit reset. Reset affects only AccountPilot’s own storage key. Demo reset and deletion cannot be undone. Do not publicly deploy this as production software.
 
 ## Validation and short test plan
 
-`npm test` runs 26 unit tests covering context migration, account linking, evidence separation, attachment constraints, contextual action plans, and the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
+`npm test` runs scoring, context, launcher, membership and PostgreSQL-isolation tests covering context migration, account linking, evidence separation, attachment constraints, contextual action plans, and the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
 
 Manual / browser smoke checklist:
 
@@ -87,7 +89,7 @@ Automated Chromium smoke testing during implementation covered creation, refresh
 
 ## Next steps
 
-Validate the terminology, weights, and usefulness of the suggested actions with founders using fictional scenarios. Before handling actual customer data, plan privacy, security, authentication, server storage, backup, and data deletion as a separate production project. No paid services or public deployment have been configured.
+Validate the terminology, weights, and usefulness of the suggested actions with founders using fictional scenarios. Before handling actual customer data, plan privacy, security, authentication, server storage, backup, and data deletion as a separate production project. No paid services or public deployment have been configured. Supabase and Stripe code is present but disabled until the owner configures the services.
 
 ## Context update checks
 

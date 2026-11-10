@@ -1,5 +1,7 @@
 # Get the account-context update on your Mac
 
+**Membership update:** member access now requires provider setup described in [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md). Use `npm run demo` to access the original fictional local demo without providers.
+
 **Simpler setup and future updates:** follow [START-HERE.md](START-HERE.md) to use the new Mac launchers. The detailed manual workflow below is retained for reference.
 
 ## What changed
@@ -46,7 +48,7 @@ npm run typecheck
 npm run dev
 ```
 
-Recommended Node.js is 24 LTS; minimum is 20.9. If you selected a different clone folder, type `cd `, drag that folder from Finder into Terminal, and press Return instead of the first command.
+Recommended Node.js is 24 LTS; minimum is 22. If you selected a different clone folder, type `cd `, drag that folder from Finder into Terminal, and press Return instead of the first command.
 
 Wait for **Ready**, then open `http://localhost:3000` in the SAME browser you used before. Keep this port and browser consistent to retain the browser's existing demo data. If a server is still occupying port 3000, stop the old Terminal process rather than switching ports and expecting the same data to appear.
 

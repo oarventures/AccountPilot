@@ -1,12 +1,14 @@
 # Run AccountPilot on your Mac
 
+**Membership update:** normal launch now opens the membership entrance. See [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md) for required services, or use `npm run demo` for the original local fictional demo without services.
+
 For the latest account-context update and the recommended no-ZIP workflow, follow [UPDATE-ON-MAC.md](UPDATE-ON-MAC.md). The initial archive instructions below are retained for reference.
 
 This is the existing complete AccountPilot demo, not a rebuild. It includes the dashboard, founder profile, opportunity management, transparent PILOT scoring, action plan, decision journal, fictional examples, and reset.
 
 ## What you need
 
-- Node.js and npm. Recommended: Node.js 24 LTS and npm 11, which were tested. Next.js requires at least Node.js 20.9.
+- Node.js and npm. Recommended: Node.js 24 LTS and npm 11, which were tested. Next.js requires at least Node.js 22.
 - Internet access for the first dependency installation from the public npm registry.
 - A modern browser with JavaScript and localStorage enabled.
 - No environment variables, `.env` file, API keys, database, login, paid service, or external application account is required to run the demo. There is intentionally no `.env.example`.
@@ -50,7 +52,7 @@ You do not need to reinstall packages each time. Changes to source files appear 
 ## 2. If something goes wrong
 
 - `node: command not found`: quit and reopen Terminal after installing Node.js. If still missing, use the Node.js 24 LTS macOS installer from https://nodejs.org.
-- Node version below 20.9: install Node.js 24 LTS, reopen Terminal, and check again. `.nvmrc` is included for people who already use nvm; nvm is not required.
+- Node version below 22: install Node.js 24 LTS, reopen Terminal, and check again. `.nvmrc` is included for people who already use nvm; nvm is not required.
 - `Could not read package.json`: Terminal is in the wrong folder. Use the Finder drag-and-drop `cd ` method above. `ls` should show `package.json`, `app`, `lib`, and `README.md`.
 - Port 3000 is already in use: run `npm run dev -- --port 3002` and open `http://localhost:3002`. Use the same port consistently because browser data is separate for each port.
 - `npm ci` network or permissions error: copy the error and ask for help. Do not use `sudo npm`, disable certificate checks, or delete your existing project.
@@ -89,6 +91,7 @@ The following uses GitHub Desktop to avoid terminal authentication setup. It pre
    ```
 
    `ditto` merges the source into the clone; the archive has no `.git`, so it does not replace Git history. If you already changed files in the clone, stop and review them before copying. Adjust either path if you chose different folders.
+
 5. Return to GitHub Desktop. Review **Changes**. Expected changes include `app`, `lib`, `tests`, `package.json`, `package-lock.json`, `.gitignore`, `.nvmrc`, configuration, and documentation. `node_modules`, `.next`, and `.env` files must not be included. `.gitignore` already excludes them.
 6. Enter the summary `Add AccountPilot local demo` and click **Commit to local-demo-setup**. This saves a version on your Mac.
 7. Click **Publish branch** (or **Push origin** if the branch already exists). This uploads source code to the existing GitHub repository; it does not deploy a website. Keep the repository private if it is private already.

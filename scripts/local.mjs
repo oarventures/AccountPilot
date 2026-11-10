@@ -73,8 +73,8 @@ function install() {
 async function main(mode) {
   if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535)
     throw new Error("Choose a port between 1 and 65535.");
-  const [major, minor] = process.versions.node.split(".").map(Number);
-  if (major < 20 || (major === 20 && minor < 9))
+  const major = Number(process.versions.node.split(".")[0]);
+  if (major < 22)
     throw new Error(
       "Install Node.js 24 LTS from nodejs.org, then reopen this launcher.",
     );
@@ -129,7 +129,7 @@ async function main(mode) {
   }
   install();
   console.log(
-    "Starting your private local demo. Keep this window open. Press Control+C to stop.",
+    "Starting AccountPilot on your computer. Keep this window open. Press Control+C to stop.",
   );
   const server = spawn(npm, ["run", "dev", "--", "--port", port], {
     cwd: root,

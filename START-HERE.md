@@ -1,6 +1,8 @@
 # AccountPilot: open it, use it, update it
 
-The complete application is on the GitHub branch **accountpilot-context-workspace**. No website has been published. No API keys, database, AI account, or paid services are required. Node.js is required (24 LTS recommended).
+**The membership update changes the entrance:** the normal launcher now opens the paywall/sign-in pages. Member mode remains locked until the owner configures the services in [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md). To use the original fictional local demo without services, run `npm run demo` and choose its local-demo link.
+
+The complete application is on the GitHub branch **accountpilot-context-workspace**. No website has been published. The fictional demo needs no API keys, database, AI account, or paid services. Member mode requires the services and configuration described in MEMBERSHIP-SETUP.md. Node.js is required (24 LTS recommended).
 
 ## One-time setup on your Mac
 

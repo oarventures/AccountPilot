@@ -9,14 +9,20 @@
     "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "launch": "node scripts/local.mjs start",
-    "update": "node scripts/local.mjs update"
+    "update": "node scripts/local.mjs update",
+    "demo": "node scripts/demo.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
     "next": "16.4.5",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
@@ -26,6 +32,6 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22"
   }
 }

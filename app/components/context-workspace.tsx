@@ -40,11 +40,13 @@ function saveFile(doc: Document) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function Documents({
+  member = false,
   docs,
   context,
   onChange,
   label,
 }: {
+  member?: boolean;
   docs: Document[];
   context: Context;
   onChange: (docs: Document[]) => void;
@@ -56,10 +58,12 @@ function Documents({
     <section className="document-section">
       <h3>{label}</h3>
       <p className="muted">
-        Fictional files only. Stored in this browser, never uploaded to a
-        server. PDF/DOCX are attachments only; their contents are not read or
-        analyzed. TXT/Markdown can be read as plain text. Maximum 350 KB per
-        file, 800 KB across the workspace.
+        {member
+          ? "Files are stored in your account when you save the private workspace. "
+          : "Fictional files only. Stored in this browser, never uploaded to a server. "}
+        PDF/DOCX are attachments only; their contents are not read or analyzed.
+        TXT/Markdown can be read as plain text. Maximum 350 KB per file, 800 KB
+        across the workspace.
       </p>
       <label>
         Attach a fictional document
@@ -136,7 +140,7 @@ function Documents({
           }}
         />
       </label>
-      {busy && <p role="status">Reading file locally…</p>}
+      {busy && <p role="status">Reading file into this workspace…</p>}
       {error && (
         <p role="alert" className="error">
           {error}
@@ -194,12 +198,14 @@ export default function ContextWorkspace({
   view,
   onJournal,
   initialAccount,
+  member = false,
 }: {
   data: Demo;
   onChange: (data: Demo) => void;
   view: "solution" | "accounts";
   onJournal: () => void;
   initialAccount?: string;
+  member?: boolean;
 }) {
   const context = data.context || initializeContext(data);
   const [selected, setSelected] = useState(
@@ -279,7 +285,7 @@ export default function ContextWorkspace({
                   })),
                 });
                 setNotice(
-                  "Solution context saved. Account briefs now use these inputs.",
+                  "Solution context updated. Account briefs now use these inputs. In member mode, click Save private workspace to persist.",
                 );
               }}
             >
@@ -302,6 +308,7 @@ export default function ContextWorkspace({
           </section>
           <section className="card form-card">
             <Documents
+              member={member}
               docs={context.solution.documents}
               context={context}
               label="Solution documents and one-pagers"
@@ -568,7 +575,7 @@ export default function ContextWorkspace({
                         if (!a.name) return;
                         updateAccount(a);
                         setNotice(
-                          "Account plan saved. Review its strategic brief next.",
+                          "Account plan updated. Review its strategic brief next. In member mode, click Save private workspace to persist.",
                         );
                       }}
                     >
@@ -599,6 +606,7 @@ export default function ContextWorkspace({
                   </section>
                   <section className="card form-card">
                     <Documents
+                      member={member}
                       context={context}
                       docs={account.documents}
                       label="Account plans and research attachments"
