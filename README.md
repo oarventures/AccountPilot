@@ -1,5 +1,7 @@
 # AccountPilot
 
+**Account-first update:** [ACCOUNT-WORKSPACE.md](ACCOUNT-WORKSPACE.md) explains company domains, document-based account plans, people, approach sequences, progress, and remaining logical gaps.
+
 **Membership update:** [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md) describes server-enforced access, per-user memory, required provider setup, and confidentiality limits. Services are disabled by default. No real customer data or payments should be used before hosted validation.
 
 **Start here:** [START-HERE.md](START-HERE.md). The Mac launchers install/start the demo and update a GitHub clone without repeated terminal commands.
@@ -36,7 +38,7 @@ Stop a server with Ctrl+C. The fictional local demo needs no secrets (`npm run d
 - View a responsive dashboard with estimated pipeline value, top priority, and monthly capacity.
 - Set a fictional offering, ideal buyer, target deal size, monthly sales hours, and 90-day revenue goal.
 - Create, inspect, edit, and delete opportunities, with evidence ratings and notes.
-- Expand a company name to inspect its score, rationale, and missing evidence.
+- Click a company name to open its account page; click its PILOT score separately to inspect the scoring rationale.
 - Review a suggested four-week plan for the highest-ranked opportunity.
 - Record decisions and update their outcomes later.
 - Maintain solution context and attachments, account-specific research and plans, stakeholder maps, evidence with sources, and founder-reviewed strategic briefs.
@@ -65,7 +67,7 @@ The 30-day plan is a deterministic template for the first-ranked company. It rec
 
 ## Browser storage and safety
 
-In the fictional local demo, business data is stored in this browser origin’s localStorage under `accountpilot.demo.v1`. Member mode instead uses authenticated, per-user database storage as described in MEMBERSHIP-SETUP.md. The initial data is fictional. Do not enter real user or customer information. The local demo has no server-side business-data storage or transmission. Member mode saves data to the configured Supabase project only when requested. Browser storage is not encrypted, authenticated, backed up, or synchronized. Anyone using the same browser profile can see it. Clearing site data removes it. Another browser, port, or device has separate data.
+The fictional local demo uses browser IndexedDB for attachment-friendly storage. It automatically imports older `accountpilot.demo.v1` localStorage data without deleting that backup. Member mode instead uses authenticated, per-user database storage as described in MEMBERSHIP-SETUP.md. The initial data is fictional. Do not enter real user or customer information. The local demo has no server-side business-data storage or transmission. Member mode saves data to the configured Supabase project only when requested. Browser storage is not encrypted, authenticated, backed up, or synchronized. Anyone using the same browser profile can see it. Clearing site data removes it. Another browser, port, or device has separate data.
 
 Storage failures show a visible notice; in that case edits remain temporary. Unsupported saved data is not overwritten until an explicit reset. Reset affects only AccountPilot’s own storage key. Demo reset and deletion cannot be undone. Do not publicly deploy this as production software.
 
@@ -82,7 +84,7 @@ Manual / browser smoke checklist:
 5. Add a journal decision, edit its outcome, and refresh to confirm persistence.
 6. Delete all opportunities: expect an empty shortlist and no invented plan.
 7. Cancel a delete/reset confirmation, then accept reset: expect four fictional examples and an empty journal.
-8. Block localStorage or place invalid JSON in the demo key: expect a visible notice and no crash.
+8. Block IndexedDB, or use invalid legacy JSON in a fresh browser profile: expect a visible notice and no overwrite of existing data.
 9. Run `npm test`, `npm run typecheck`, and `npm run build`.
 
 Automated Chromium smoke testing during implementation covered creation, refresh persistence, editing, profile saving, journal outcome persistence, deletion, reset, mobile overflow, and browser errors. Browser tooling is not a runtime dependency.
@@ -93,4 +95,4 @@ Validate the terminology, weights, and usefulness of the suggested actions with 
 
 ## Context update checks
 
-In addition to the original smoke checklist, validate legacy storage migration without reset; solution saving; account-specific attachments; documented source/date requirements; exact TXT passage matching; founder interpretations staying separate from evidence; stakeholder capture; strategic brief review and journal snapshots; persistence after refresh; isolation between accounts; and mobile layout. PDF/DOCX content is not parsed or analyzed. Attachments are limited to 350 KB each and 800 KB total. No new environment configuration is required.
+In addition to the original smoke checklist, validate legacy storage migration without reset; solution saving; account-specific attachments; documented source/date requirements; exact TXT passage matching; founder interpretations staying separate from evidence; stakeholder capture; strategic brief review and journal snapshots; persistence after refresh; isolation between accounts; and mobile layout. PDF/Word/PowerPoint content is not parsed or analyzed. Attachments are limited to 5 MB each and 8 MB total. No new environment configuration is required.

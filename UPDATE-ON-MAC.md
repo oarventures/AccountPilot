@@ -70,9 +70,9 @@ To associate another deal with an account, edit that opportunity and choose its 
 
 ## 5. What attachments do and do not do
 
-Files stay in localStorage in your browser. They are not sent to a server. PDF and DOCX files are stored and downloadable, but their contents are NOT extracted or analyzed. TXT and Markdown are shown as plain text. A copied passage can be checked for an exact text match against a related TXT/Markdown attachment; this verifies only the match, not the truth of the source. Other passages remain founder-entered and unverified.
+Local demo files stay in IndexedDB in your browser (old localStorage data is migrated). Member files stay in their authenticated owner’s server workspace. They are not sent to a server. PDF and DOCX files are stored and downloadable, but their contents are NOT extracted or analyzed. TXT and Markdown are shown as plain text. A copied passage can be checked for an exact text match against a related TXT/Markdown attachment; this verifies only the match, not the truth of the source. Other passages remain founder-entered and unverified.
 
-Limits are 350 KB per file and 800 KB across the entire workspace. These conservative limits leave room for browser storage overhead and existing notes. Files larger than this require a smaller fictional excerpt. If storage is full or unavailable, a visible warning explains that edits are temporary. Do not assume an attachment is safely saved if you see that warning.
+Limits are 5 MB per file and 8 MB across the entire workspace. These conservative limits leave room for browser storage overhead and existing notes. Files larger than this require a smaller fictional excerpt. If storage is full or unavailable, a visible warning explains that edits are temporary. Do not assume an attachment is safely saved if you see that warning.
 
 Removing a file retains its evidence entry and passage but marks its file citation unavailable. Reset demo removes account context and attachments as well as the original demo data; do not click reset to update the application. Browser storage is neither encrypted nor backed up and must contain no real customer data.
 

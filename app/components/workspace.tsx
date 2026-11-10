@@ -3,10 +3,13 @@ import { useEffect, useState, useRef } from "react";
 
 import { actionPlan, Demo, Opportunity, rank, seed } from "@/lib/strategy";
 import ContextWorkspace from "./context-workspace";
+import AccountHub from "./account-hub";
+import { identityError, normalizeDomain } from "@/lib/accounts";
+import { loadDemo, storeDemo } from "@/lib/demo-storage";
 import { validData, emptyMemberWorkspace } from "@/lib/workspace-data";
 import { migrateDemo, saveOpportunity } from "@/lib/context";
 const freshDemo = () => migrateDemo(seed());
-const KEY = "accountpilot.demo.v1";
+
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -26,11 +29,11 @@ const empty = (): Opportunity => ({
 });
 const tabs = [
   "Overview",
+  "Accounts & briefs",
   "Opportunities",
+  "Solution context",
   "Founder profile",
   "Decision journal",
-  "Solution context",
-  "Accounts & briefs",
 ] as const;
 export default function Workspace({ memberId }: { memberId?: string }) {
   const member = Boolean(memberId);
@@ -96,25 +99,34 @@ export default function Workspace({ memberId }: { memberId?: string }) {
         active = false;
       };
     }
-    try {
-      const saved = localStorage.getItem(KEY);
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (validData(parsed)) setData(migrateDemo(parsed));
-        else {
+    let active = true;
+    loadDemo()
+      .then((saved) => {
+        if (!active) return;
+        if (saved !== null) {
+          if (validData(saved)) setData(migrateDemo(saved));
+          else {
+            setStorageOK(false);
+            setMessage(
+              "Saved demo data has an unsupported format. It has not been overwritten.",
+            );
+          }
+        }
+      })
+      .catch(() => {
+        if (active) {
           setStorageOK(false);
           setMessage(
-            "Saved demo data has an unsupported format. Reset the demo to start again.",
+            "Browser storage could not be read. Existing data has not been overwritten; changes are temporary.",
           );
         }
-      }
-    } catch {
-      setStorageOK(false);
-      setMessage(
-        "Browser storage could not be read. Changes are temporary until storage is available or the demo is reset.",
-      );
-    }
-    setReady(true);
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
+    return () => {
+      active = false;
+    };
   }, [memberId]);
   useEffect(() => {
     if (!dirty) return;
@@ -125,17 +137,51 @@ export default function Workspace({ memberId }: { memberId?: string }) {
     return () => window.removeEventListener("beforeunload", guard);
   }, [dirty]);
   useEffect(() => {
-    if (!member && ready && storageOK) {
-      try {
-        localStorage.setItem(KEY, JSON.stringify(data));
-      } catch {
+    if (!member && ready && storageOK)
+      storeDemo(data).catch(() => {
         setStorageOK(false);
         setMessage(
-          "Browser storage is unavailable or full. Changes are temporary and will be lost on refresh.",
+          "Browser storage is unavailable or full. Changes are temporary and may be lost on refresh.",
         );
-      }
-    }
+      });
   }, [data, ready, storageOK, member]);
+  useEffect(() => {
+    const sync = () => {
+      const account = new URLSearchParams(window.location.search).get(
+        "account",
+      );
+      if (account) {
+        setAccountFocus(account);
+        setTab("Accounts & briefs");
+      } else setAccountFocus(undefined);
+    };
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+  function navigateAccount(accountId: string) {
+    setAccountFocus(accountId || undefined);
+    const url = new URL(window.location.href);
+    if (accountId) url.searchParams.set("account", accountId);
+    else url.searchParams.delete("account");
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }
+  function openAccount(opportunity: Opportunity) {
+    let accountId =
+      opportunity.accountId ||
+      data.context?.accounts.find((a) => a.id === opportunity.id)?.id;
+    let next = data;
+    if (!accountId) {
+      next = saveOpportunity(data, opportunity);
+      accountId = next.opportunities.find(
+        (o) => o.id === opportunity.id,
+      )?.accountId;
+      setData(next);
+    }
+    navigateAccount(accountId || "");
+    setTab("Accounts & briefs");
+    setEditing(null);
+  }
   function lockWorkspace(destination = "/login") {
     bypassUnload.current = true;
     setData(migrateDemo(emptyMemberWorkspace()));
@@ -306,6 +352,7 @@ export default function Workspace({ memberId }: { memberId?: string }) {
           href="#"
           onClick={(e) => {
             e.preventDefault();
+            navigateAccount("");
             setTab("Overview");
           }}
         >
@@ -341,12 +388,13 @@ export default function Workspace({ memberId }: { memberId?: string }) {
               aria-current={tab === t ? "page" : undefined}
               className={tab === t ? "nav active" : "nav"}
               onClick={() => {
+                if (t !== "Accounts & briefs") navigateAccount("");
                 setTab(t);
                 setEditing(null);
               }}
             >
               <span aria-hidden="true">
-                {["▦", "◎", "♙", "▤", "◇", "▣"][i]}
+                {["▦", "▣", "◎", "◇", "♙", "▤"][i]}
               </span>
               {t}
               {t === "Opportunities" && <b>{data.opportunities.length}</b>}
@@ -365,7 +413,7 @@ export default function Workspace({ memberId }: { memberId?: string }) {
           <span className="status-dot" />{" "}
           {member
             ? "Member workspace · Server storage"
-            : "Demo only · Local storage"}
+            : "Demo only · Browser storage"}
           <button
             onClick={reset}
             disabled={member && (!ready || saving || !storageOK)}
@@ -387,7 +435,7 @@ export default function Workspace({ memberId }: { memberId?: string }) {
           <div className="privacy">
             {member
               ? "Your account workspace. Click Save private workspace to persist changes. Use synthetic data until the hosted security setup has been verified."
-              : "Fictional examples only. Everything stays in this browser’s localStorage. Please don’t enter real user or customer data."}
+              : "Fictional examples only. Everything stays in this browser’s IndexedDB storage. Please don’t enter real user or customer data."}
           </div>
           {member && (
             <div className="private-status">
@@ -581,11 +629,10 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                         </div>
                         <button
                           onClick={() => {
-                            setTab("Opportunities");
-                            if (ranked[0]) setExpanded(ranked[0].id);
+                            if (ranked[0]) openAccount(ranked[0]);
                           }}
                         >
-                          Explore the rationale <span>↑</span>
+                          Open account workspace <span>↑</span>
                         </button>
                       </div>
                     </>
@@ -608,7 +655,39 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
-                          setData(saveOpportunity(data, editing));
+                          let next = saveOpportunity(data, editing);
+                          if (!editing.accountId) {
+                            const accountId = next.opportunities.find(
+                              (o) => o.id === editing.id,
+                            )!.accountId!;
+                            const domain = String(
+                              new FormData(e.currentTarget).get(
+                                "newAccountDomain",
+                              ) || "",
+                            );
+                            const error = identityError(
+                              data.context?.accounts || [],
+                              accountId,
+                              editing.company,
+                              domain,
+                            );
+                            if (error) {
+                              setMessage(error);
+                              return;
+                            }
+                            next = {
+                              ...next,
+                              context: {
+                                ...next.context!,
+                                accounts: next.context!.accounts.map((a) =>
+                                  a.id === accountId
+                                    ? { ...a, domain: normalizeDomain(domain) }
+                                    : a,
+                                ),
+                              },
+                            };
+                          }
+                          setData(next);
                           setEditing(null);
                           setMessage(
                             "Opportunity saved. Priorities and the action plan have been updated.",
@@ -629,15 +708,32 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                               }
                             >
                               <option value="">
-                                Match company name, or create a new account
+                                Create a separate account if not linked
                               </option>
                               {data.context?.accounts.map((a) => (
                                 <option value={a.id} key={a.id}>
-                                  {a.name}
+                                  {a.name} · {a.domain || "Domain unconfirmed"}
                                 </option>
                               ))}
                             </select>
                           </label>
+                          {!editing.accountId && (
+                            <label className="full">
+                              Company website or domain
+                              <input
+                                name="newAccountDomain"
+                                aria-label="Company website or domain"
+                                aria-describedby="new-domain-help"
+                                required
+                                maxLength={300}
+                                placeholder="example.com"
+                              />
+                              <small id="new-domain-help">
+                                For an existing company, select its account
+                                above instead.
+                              </small>
+                            </label>
+                          )}
                           <label>
                             Company name
                             <input
@@ -812,15 +908,15 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                                     <div>
                                       <button
                                         className="company-name"
-                                        aria-expanded={expanded === o.id}
-                                        onClick={() =>
-                                          setExpanded(
-                                            expanded === o.id ? null : o.id,
-                                          )
-                                        }
+                                        onClick={() => openAccount(o)}
                                       >
                                         {o.company}
                                       </button>
+                                      <small>
+                                        {data.context?.accounts.find(
+                                          (a) => a.id === o.accountId,
+                                        )?.domain || "Domain unconfirmed"}
+                                      </small>
                                       <small>
                                         {i === 0
                                           ? "First focus"
@@ -833,8 +929,22 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                                 <td>
                                   <div className="score">
                                     <strong>
-                                      {o.analysis.score}
-                                      <small>/100</small>
+                                      <button
+                                        className="score-link"
+                                        aria-label={
+                                          "View PILOT rationale for " +
+                                          o.company
+                                        }
+                                        aria-expanded={expanded === o.id}
+                                        onClick={() =>
+                                          setExpanded(
+                                            expanded === o.id ? null : o.id,
+                                          )
+                                        }
+                                      >
+                                        {o.analysis.score}
+                                        <small>/100</small>
+                                      </button>
                                     </strong>
                                     <div className="score-track">
                                       <span
@@ -1108,8 +1218,13 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                           journal: [
                             {
                               id: crypto.randomUUID(),
+                              accountId:
+                                String(f.get("accountId") || "") || undefined,
                               date: new Date().toISOString(),
-                              company: String(f.get("company")).trim(),
+                              company:
+                                data.context?.accounts.find(
+                                  (a) => a.id === String(f.get("accountId")),
+                                )?.name || String(f.get("company")).trim(),
                               decision: String(f.get("decision")).trim(),
                               outcome: String(f.get("outcome")).trim(),
                             },
@@ -1123,6 +1238,23 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                       }}
                     >
                       <div className="form-grid">
+                        <label className="full">
+                          Account (optional)
+                          <select
+                            aria-label="Account (optional)"
+                            name="accountId"
+                            defaultValue={accountFocus || ""}
+                          >
+                            <option value="">
+                              General decision / not linked
+                            </option>
+                            {data.context?.accounts.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name} · {a.domain || "Domain unconfirmed"}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                         <label className="full">
                           Company / context
                           <input
@@ -1165,6 +1297,36 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                               {new Date(j.date).toLocaleDateString()}
                             </time>
                           </div>
+                          <label>
+                            Linked account
+                            <select
+                              aria-label={"Linked account for decision " + j.id}
+                              value={j.accountId || ""}
+                              onChange={(e) =>
+                                setData({
+                                  ...data,
+                                  journal: data.journal.map((x) =>
+                                    x.id === j.id
+                                      ? {
+                                          ...x,
+                                          accountId:
+                                            e.target.value || undefined,
+                                        }
+                                      : x,
+                                  ),
+                                })
+                              }
+                            >
+                              <option value="">
+                                Not linked / general decision
+                              </option>
+                              {data.context?.accounts.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.name} · {a.domain || "Domain unconfirmed"}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                           <p className="notes">{j.decision}</p>
                           <label htmlFor={"outcome-" + j.id}>
                             Outcome / learning
@@ -1209,13 +1371,23 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                   </section>
                 </>
               )}
-              {(tab === "Solution context" || tab === "Accounts & briefs") && (
+              {tab === "Solution context" && (
                 <ContextWorkspace
                   data={data}
                   onChange={setData}
-                  view={tab === "Solution context" ? "solution" : "accounts"}
+                  view="solution"
+                  member={member}
+                  onJournal={() => setTab("Decision journal")}
+                />
+              )}
+              {tab === "Accounts & briefs" && (
+                <AccountHub
+                  key={accountFocus || "directory"}
+                  data={data}
+                  onChange={setData}
                   member={member}
                   initialAccount={accountFocus}
+                  onNavigate={navigateAccount}
                   onJournal={() => setTab("Decision journal")}
                 />
               )}
@@ -1225,7 +1397,7 @@ export default function Workspace({ memberId }: { memberId?: string }) {
                 <span>
                   {member
                     ? "Per-user server storage · No AI calls"
-                    : "Demo only · Browser local storage · No AI calls"}
+                    : "Demo only · Browser storage · No AI calls"}
                 </span>
               </footer>
             </>

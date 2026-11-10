@@ -32,7 +32,7 @@ test("legacy migration preserves founder data, opportunity notes and journal", (
   assert.deepEqual(migrateDemo(next), next);
   assert.ok(validContext(next.context));
 });
-test("migration groups opportunities for the same account without dropping deals", () => {
+test("migration does not merge ambiguous same-name companies", () => {
   const old = seed();
   old.opportunities.push({
     ...old.opportunities[0],
@@ -40,10 +40,10 @@ test("migration groups opportunities for the same account without dropping deals
     company: "northstar studio",
   });
   const next = migrateDemo(old);
-  assert.equal(next.context!.accounts.length, 4);
+  assert.equal(next.context!.accounts.length, 5);
   assert.equal(
     linkedOpportunities(next.context!.accounts[0], next.opportunities).length,
-    2,
+    1,
   );
 });
 test("account research survives removal of its last opportunity", () => {
@@ -116,8 +116,8 @@ test("founder interpretations never count as documented sources", () => {
 test("attachment constraints reject unsafe extensions, empty and oversized files", () => {
   assert.match(attachmentError("a.html", 100, 0), /Use PDF/);
   assert.match(attachmentError("a.txt", 0, 0), /empty/);
-  assert.match(attachmentError("a.pdf", 350001, 0), /350 KB/);
-  assert.match(attachmentError("a.docx", 200000, 700000), /800 KB/);
+  assert.match(attachmentError("a.pdf", 5000001, 0), /5 MB/);
+  assert.match(attachmentError("a.docx", 2000000, 7000000), /8 MB/);
   assert.equal(attachmentError("a.MD", 10, 0), "");
 });
 test("context validation rejects malformed saved attachment URLs and evidence", () => {

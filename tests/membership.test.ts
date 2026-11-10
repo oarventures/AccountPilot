@@ -120,6 +120,15 @@ test("actual PostgreSQL policies isolate users and keep billing privileges serve
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../supabase/migrations/002_account_attachments.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.query("insert into auth.users(id) values($1),($2),($3)", [a, b, c]);
   const asUser = async (id: string) => {
     await db.exec("reset role; set role authenticated;");

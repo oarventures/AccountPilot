@@ -41,7 +41,7 @@ export async function PUT(request: Request) {
   try {
     const { client, user } = await workspaceAccess(request);
     sameOrigin(request);
-    const body = await readJson(request);
+    const body = await readJson(request, 24000000);
     if (
       !body ||
       typeof body !== "object" ||
@@ -53,7 +53,7 @@ export async function PUT(request: Request) {
     )
       throw new AccessError(400, "Invalid workspace or revision.");
     const data = migrateDemo(body.data);
-    if (allDocuments(data.context!).reduce((n, d) => n + d.bytes, 0) > 800000)
+    if (allDocuments(data.context!).reduce((n, d) => n + d.bytes, 0) > 8000000)
       throw new AccessError(413, "Attachment allowance exceeded.");
     const revision = Number(body.revision);
     const result =

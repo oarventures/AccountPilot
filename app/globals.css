@@ -1249,3 +1249,229 @@ aside {
     margin-left: 0;
   }
 }
+.account-directory {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.account-tile {
+  padding: 24px;
+  text-align: left;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.account-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 18px #244c3010;
+}
+.account-tile > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.account-tile h3 {
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 400;
+  margin: 18px 0 8px;
+}
+.account-tile p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.account-tile small {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+}
+.open-account {
+  display: block;
+  margin-top: 22px;
+  font-weight: bold;
+  font-size: 12px;
+}
+.account-object-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 25px 0;
+}
+.account-object-header h2 {
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+}
+.account-object-header p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+.account-object-header .badge {
+  margin: 5px;
+}
+.account-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 25px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.account-tabs button {
+  padding: 10px 13px;
+  white-space: nowrap;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.account-tabs button[aria-current="page"] {
+  background: #e7efdf;
+  font-weight: bold;
+  color: var(--green);
+}
+.account-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.account-summary-grid h3 {
+  font-size: 17px;
+  line-height: 1.5;
+}
+.account-summary-grid p,
+.account-hub p {
+  line-height: 1.8;
+}
+.account-hub .form-card {
+  margin-bottom: 20px;
+}
+.account-search {
+  margin-top: 22px;
+  max-width: 500px;
+}
+.account-hub .gap-list {
+  padding-left: 24px;
+  list-style: disc;
+  line-height: 2;
+}
+.linked-deal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 15px 0;
+}
+.linked-deal small {
+  width: 100%;
+  color: var(--muted);
+}
+.sequence-step {
+  display: flex;
+  gap: 18px;
+  padding: 25px 0;
+  border-top: 1px solid var(--line);
+}
+.sequence-step > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+.sequence-step p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.step-number {
+  border-radius: 50%;
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #e8efdf;
+  color: #657c50;
+}
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 20px;
+  font-size: 11px;
+}
+.step-actions label {
+  max-width: 150px;
+}
+.step-actions button {
+  padding: 8px 0;
+}
+.step-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.activity-row {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.activity-row .badge {
+  margin-left: 15px;
+}
+.account-hub details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 14px 0;
+}
+.account-hub .document-list .badge {
+  margin-left: 10px;
+}
+.account-hub .document-list label {
+  margin-top: 12px;
+  max-width: 240px;
+}
+.account-hub .section-title {
+  padding: 0;
+}
+.account-hub .brief-grid {
+  margin-bottom: 20px;
+}
+.account-hub .people-cards {
+  margin-top: 20px;
+}
+.score-link {
+  font-weight: 600;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 1000px) {
+  .account-directory,
+  .account-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .account-directory,
+  .account-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .account-object-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .account-object-header h2 {
+    font-size: 30px;
+  }
+  .account-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .account-tabs button {
+    flex-shrink: 0;
+  }
+  .account-hub .inline-form {
+    flex-direction: column;
+  }
+  .account-hub .sequence-step {
+    gap: 12px;
+  }
+}

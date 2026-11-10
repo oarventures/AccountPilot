@@ -47,11 +47,11 @@ npm run update
 1. **Solution context:** describe a fictional offering, its benefits, ideal customer, proof, and limitations; attach fictional documents.
 2. **Accounts & briefs:** select/create an account. Save its plan: why this account, why this solution, why now, hypothesis, next action, message, and pause condition.
 3. Add research entries as **Documented information**, **Founder interpretation**, or **Open question**. Documented entries need a source and date. Add stakeholders and explicitly choose your **Chosen next contact**.
-4. Open **Strategic brief**. Review the evidence and gaps. Use **Download account brief** to save the written reasoning as a Markdown text file.
+4. Open an account and use **Evidence & review → Strategic brief**. Review the evidence and gaps. Use **Download account brief** to save the written reasoning as a Markdown text file.
 5. Record **Pursue**, **Nurture**, or **Pause**, explain why, and optionally set a review date. This also writes a decision-journal entry. Review dates are visible dates, not automatic notifications.
 6. Return to Overview. The 30-day plan uses your saved judgments. A pause decision takes precedence over active pursuit even if the opportunity has a high score.
 
-All information stays in this browser's localStorage. PDF/DOCX files are attached but not parsed or automatically understood. TXT/Markdown can be read locally. Files are limited to 350 KB each and 800 KB total. No real customer data should be entered. The app does not invent research, send outreach, or make live AI calls.
+The local demo uses IndexedDB and imports the old localStorage data; member mode uses per-user server storage. PDF/Word/PowerPoint files are attached but not parsed or automatically understood. TXT/Markdown can be read locally. Files are limited to 5 MB each and 8 MB total. No real customer data should be entered. The app does not invent research, send outreach, or make live AI calls.
 
 ## What was verified
 

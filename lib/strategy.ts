@@ -19,6 +19,7 @@ export type Opportunity = {
   notes: string;
 };
 export type Decision = {
+  accountId?: string;
   id: string;
   date: string;
   company: string;
@@ -114,16 +115,21 @@ export function actionPlan(
         text: `Review ${account.name}${account.reviewDate ? " on " + account.reviewDate : " when useful new evidence arrives"}. Record the outcome before deciding whether to pursue again.`,
       },
     ];
-  const person = account?.people.find((p) => p.id === account.primaryContactId);
+  const sequence = account?.steps?.find((s) => s.status === "Planned");
+  const person = sequence?.personId
+    ? account?.people.find((p) => p.id === sequence.personId)
+    : account?.people.find((p) => p.id === account.primaryContactId);
   const fits =
     profile.capacity > 0 && top.effort > 0 && top.effort <= profile.capacity;
   return [
     {
       week: "01",
       title: "Validate before you pursue",
-      text: account?.nextAction.trim()
-        ? `Founder-entered next action for ${account.name}: ${account.nextAction}`
-        : `${top.company}: ${top.analysis.gaps[0] ? `resolve this gap — ${top.analysis.gaps[0].toLowerCase()}.` : "confirm the recorded pain and buying process in a discovery conversation."}`,
+      text: sequence
+        ? `Next planned account step: ${sequence.title}. Objective: ${sequence.objective}. Rationale: ${sequence.rationale}${sequence.due ? ". Target date: " + sequence.due : ""}`
+        : account?.nextAction.trim()
+          ? `Founder-entered next action for ${account.name}: ${account.nextAction}`
+          : `${top.company}: ${top.analysis.gaps[0] ? `resolve this gap — ${top.analysis.gaps[0].toLowerCase()}.` : "confirm the recorded pain and buying process in a discovery conversation."}`,
     },
     {
       week: "02",

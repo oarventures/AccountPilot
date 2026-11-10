@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { documentType, documentPurposes } from "@/lib/accounts";
 import type { Demo } from "@/lib/strategy";
 import { scoreOpportunity } from "@/lib/strategy";
 import {
@@ -39,7 +40,7 @@ function saveFile(doc: Document) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function Documents({
+export function Documents({
   member = false,
   docs,
   context,
@@ -54,6 +55,9 @@ function Documents({
 }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [purpose, setPurpose] = useState<NonNullable<Document["purpose"]>>(
+    label.toLowerCase().includes("account plan") ? "Account plan" : "Research",
+  );
   return (
     <section className="document-section">
       <h3>{label}</h3>
@@ -61,15 +65,29 @@ function Documents({
         {member
           ? "Files are stored in your account when you save the private workspace. "
           : "Fictional files only. Stored in this browser, never uploaded to a server. "}
-        PDF/DOCX are attachments only; their contents are not read or analyzed.
-        TXT/Markdown can be read as plain text. Maximum 350 KB per file, 800 KB
-        across the workspace.
+        PDF, Word, and PowerPoint files are attachments only; their contents are
+        not read or analyzed. TXT/Markdown can be read as plain text. Maximum 5
+        MB per file, 8 MB across the workspace.
       </p>
+      <label>
+        Document role
+        <select
+          aria-label="Document role"
+          value={purpose}
+          onChange={(e) =>
+            setPurpose(e.target.value as NonNullable<Document["purpose"]>)
+          }
+        >
+          {documentPurposes.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </select>
+      </label>
       <label>
         Attach a fictional document
         <input
           type="file"
-          accept=".pdf,.docx,.txt,.md"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md"
           disabled={busy}
           onChange={async (e) => {
             const input = e.currentTarget;
@@ -99,14 +117,23 @@ function Documents({
                 throw new Error(
                   "This file does not have a DOCX archive header.",
                 );
-              const type =
-                ext === "pdf"
-                  ? "application/pdf"
-                  : ext === "docx"
-                    ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    : ext === "md"
-                      ? "text/markdown"
-                      : "text/plain";
+              if (
+                (ext === "doc" || ext === "ppt") &&
+                !(
+                  buffer[0] === 208 &&
+                  buffer[1] === 207 &&
+                  buffer[2] === 17 &&
+                  buffer[3] === 224
+                )
+              )
+                throw new Error(
+                  "This file does not have a Word/PowerPoint binary header.",
+                );
+              if (ext === "pptx" && !(buffer[0] === 80 && buffer[1] === 75))
+                throw new Error(
+                  "This file does not have a PowerPoint archive header.",
+                );
+              const type = documentType(file.name);
               const text =
                 ext === "txt" || ext === "md"
                   ? new TextDecoder().decode(buffer)
@@ -124,6 +151,7 @@ function Documents({
                   id: uid(),
                   name: file.name,
                   bytes: file.size,
+                  purpose,
                   added: new Date().toISOString(),
                   dataUrl,
                   text,
@@ -157,6 +185,32 @@ function Documents({
           <li key={d.id}>
             <div>
               <strong>{d.name}</strong>
+              <span className="badge">{d.purpose || "Uncategorized"}</span>
+              <label>
+                Document role for {d.name}
+                <select
+                  aria-label={"Document role for " + d.name}
+                  value={d.purpose || "Other"}
+                  onChange={(e) =>
+                    onChange(
+                      docs.map((x) =>
+                        x.id === d.id
+                          ? {
+                              ...x,
+                              purpose: e.target.value as NonNullable<
+                                Document["purpose"]
+                              >,
+                            }
+                          : x,
+                      ),
+                    )
+                  }
+                >
+                  {documentPurposes.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
               <small>
                 {Math.ceil(d.bytes / 1000)} KB · added {d.added.slice(0, 10)} ·{" "}
                 {d.text
@@ -199,6 +253,7 @@ export default function ContextWorkspace({
   onJournal,
   initialAccount,
   member = false,
+  embedded = false,
 }: {
   data: Demo;
   onChange: (data: Demo) => void;
@@ -206,6 +261,7 @@ export default function ContextWorkspace({
   onJournal: () => void;
   initialAccount?: string;
   member?: boolean;
+  embedded?: boolean;
 }) {
   const context = data.context || initializeContext(data);
   const [selected, setSelected] = useState(
@@ -327,77 +383,81 @@ export default function ContextWorkspace({
         </>
       ) : (
         <>
-          <section className="card form-card">
-            <div className="section-title">
-              <div>
-                <h2>Account workspaces</h2>
-                <p>
-                  An account keeps its plan, evidence, and people across
-                  multiple opportunities.
-                </p>
+          {!embedded && (
+            <section className="card form-card">
+              <div className="section-title">
+                <div>
+                  <h2>Account workspaces</h2>
+                  <p>
+                    An account keeps its plan, evidence, and people across
+                    multiple opportunities.
+                  </p>
+                </div>
               </div>
-            </div>
-            <form
-              className="inline-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                const name = String(f.get("name")).trim();
-                if (!name) return;
-                if (
-                  context.accounts.some(
-                    (a) => a.name.toLowerCase() === name.toLowerCase(),
-                  )
-                ) {
-                  setNotice(
-                    "An account with this name already exists. Select it below.",
-                  );
-                  return;
-                }
-                const a = blankAccount(uid(), name);
-                update({ ...context, accounts: [...context.accounts, a] });
-                setSelected(a.id);
-                setMode("plan");
-                setNotice("Account created. Add its plan and evidence.");
-                e.currentTarget.reset();
-              }}
-            >
-              <label>
-                New fictional account name
-                <input name="name" required maxLength={100} />
-              </label>
-              <button className="primary">Create account</button>
-            </form>
-            {context.accounts.length ? (
-              <label className="account-select">
-                Select account
-                <select
-                  aria-label="Select account"
-                  value={selected}
-                  onChange={(e) => {
-                    setSelected(e.target.value);
-                    setNotice("");
-                  }}
-                >
-                  <option value="">Choose an account</option>
-                  {context.accounts.map((a) => (
-                    <option value={a.id} key={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <p className="empty">
-                No accounts yet. Create one above to start a plan.
-              </p>
-            )}
-          </section>
+              <form
+                className="inline-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  const name = String(f.get("name")).trim();
+                  if (!name) return;
+                  if (
+                    context.accounts.some(
+                      (a) => a.name.toLowerCase() === name.toLowerCase(),
+                    )
+                  ) {
+                    setNotice(
+                      "An account with this name already exists. Select it below.",
+                    );
+                    return;
+                  }
+                  const a = blankAccount(uid(), name);
+                  update({ ...context, accounts: [...context.accounts, a] });
+                  setSelected(a.id);
+                  setMode("plan");
+                  setNotice("Account created. Add its plan and evidence.");
+                  e.currentTarget.reset();
+                }}
+              >
+                <label>
+                  New fictional account name
+                  <input name="name" required maxLength={100} />
+                </label>
+                <button className="primary">Create account</button>
+              </form>
+              {context.accounts.length ? (
+                <label className="account-select">
+                  Select account
+                  <select
+                    aria-label="Select account"
+                    value={selected}
+                    onChange={(e) => {
+                      setSelected(e.target.value);
+                      setNotice("");
+                    }}
+                  >
+                    <option value="">Choose an account</option>
+                    {context.accounts.map((a) => (
+                      <option value={a.id} key={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <p className="empty">
+                  No accounts yet. Create one above to start a plan.
+                </p>
+              )}
+            </section>
+          )}
           {account && strategy && (
             <>
               <div className="account-heading">
                 <div>
-                  <h2>{account.name}</h2>
+                  <h2>
+                    {embedded ? "Evidence and decision review" : account.name}
+                  </h2>
                   <p className="muted">
                     {strategy.linked.length} linked opportunities ·{" "}
                     {account.reviewed
@@ -553,68 +613,79 @@ export default function ContextWorkspace({
               </section>
               {mode === "plan" ? (
                 <>
-                  <section className="card form-card">
-                    <h2>The account plan</h2>
-                    <p className="muted">
-                      Save your reasoning explicitly. These are founder
-                      judgments, not verified facts. Attach a longer account
-                      plan below and capture the relevant passages as evidence.
-                    </p>
-                    <form
-                      key={
-                        account.id +
-                        JSON.stringify(accountFields.map(([k]) => account[k]))
-                      }
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const f = new FormData(e.currentTarget);
-                        const a = { ...account, reviewed: "" };
-                        for (const [key] of accountFields)
-                          a[key] = String(f.get(key)).trim();
-                        a.name = String(f.get("accountName")).trim();
-                        if (!a.name) return;
-                        updateAccount(a);
-                        setNotice(
-                          "Account plan updated. Review its strategic brief next. In member mode, click Save private workspace to persist.",
-                        );
-                      }}
-                    >
-                      <div className="form-grid">
-                        <label className="full">
-                          Account name
-                          <input
-                            name="accountName"
-                            required
-                            maxLength={100}
-                            defaultValue={account.name}
-                          />
-                        </label>
-                        {accountFields.map(([key, label]) => (
-                          <label className="full" key={key}>
-                            {label}
-                            <textarea
-                              aria-label={label}
-                              name={key}
-                              maxLength={8000}
-                              defaultValue={account[key]}
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <button className="primary">Save account plan</button>
-                    </form>
-                  </section>
-                  <section className="card form-card">
-                    <Documents
-                      member={member}
-                      context={context}
-                      docs={account.documents}
-                      label="Account plans and research attachments"
-                      onChange={(documents) =>
-                        updateAccount({ ...account, documents, reviewed: "" })
-                      }
-                    />
-                  </section>
+                  {!embedded && (
+                    <>
+                      <section className="card form-card">
+                        <h2>The account plan</h2>
+                        <p className="muted">
+                          Save your reasoning explicitly. These are founder
+                          judgments, not verified facts. Attach a longer account
+                          plan below and capture the relevant passages as
+                          evidence.
+                        </p>
+                        <form
+                          key={
+                            account.id +
+                            JSON.stringify(
+                              accountFields.map(([k]) => account[k]),
+                            )
+                          }
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const f = new FormData(e.currentTarget);
+                            const a = { ...account, reviewed: "" };
+                            for (const [key] of accountFields)
+                              a[key] = String(f.get(key)).trim();
+                            a.name = String(f.get("accountName")).trim();
+                            if (!a.name) return;
+                            updateAccount(a);
+                            setNotice(
+                              "Account plan updated. Review its strategic brief next. In member mode, click Save private workspace to persist.",
+                            );
+                          }}
+                        >
+                          <div className="form-grid">
+                            <label className="full">
+                              Account name
+                              <input
+                                name="accountName"
+                                required
+                                maxLength={100}
+                                defaultValue={account.name}
+                              />
+                            </label>
+                            {accountFields.map(([key, label]) => (
+                              <label className="full" key={key}>
+                                {label}
+                                <textarea
+                                  aria-label={label}
+                                  name={key}
+                                  maxLength={8000}
+                                  defaultValue={account[key]}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                          <button className="primary">Save account plan</button>
+                        </form>
+                      </section>
+                      <section className="card form-card">
+                        <Documents
+                          member={member}
+                          context={context}
+                          docs={account.documents}
+                          label="Account plans and research attachments"
+                          onChange={(documents) =>
+                            updateAccount({
+                              ...account,
+                              documents,
+                              reviewed: "",
+                            })
+                          }
+                        />
+                      </section>
+                    </>
+                  )}
                   <section className="card form-card">
                     <h2>Evidence, interpretation, and open questions</h2>
                     <p className="muted">
@@ -849,10 +920,10 @@ export default function ContextWorkspace({
                     <h2>{strategy.status}</h2>
                     <p className="muted">
                       This brief organizes your saved inputs. It does not read
-                      PDF/DOCX files, infer facts, generate research, or decide
-                      whether you should buy or sell. PILOT scores summarize
-                      your separate opportunity ratings; supporting evidence
-                      must be reviewed by you.
+                      PDF, Word, or PowerPoint files, infer facts, generate
+                      research, or decide whether you should buy or sell. PILOT
+                      scores summarize your separate opportunity ratings;
+                      supporting evidence must be reviewed by you.
                     </p>
                     <div className="brief-grid">
                       <article>
@@ -979,6 +1050,7 @@ export default function ContextWorkspace({
                                 id: uid(),
                                 date: new Date().toISOString(),
                                 company: account.name,
+                                accountId: account.id,
                                 decision: `Account review — ${account.name}\nHypothesis: ${account.hypothesis || "Not recorded"}\nNext action: ${account.nextAction || "Not recorded"}\nMessage hypothesis: ${account.message || "Not recorded"}\nPause condition: ${account.pause || "Not recorded"}\nOpen template gaps: ${strategy.questions.length}`,
                                 outcome: "",
                               },

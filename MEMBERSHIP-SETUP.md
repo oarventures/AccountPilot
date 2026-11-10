@@ -20,7 +20,7 @@ This is an integration candidate for testing, not a production confidentiality g
 
 A new member starts with an empty workspace. Their profile, accounts, attachments, evidence, decisions, and notes are stored in a single database row owned by their authenticated user ID. Click **Save private workspace** to persist changes. Unsaved changes are clearly marked. Optimistic revisions prevent another tab's newer version from being silently overwritten. Sign out before sharing a browser. Sessions are rechecked on focus and periodically, and cross-tab sign-in/out messages clear an open private view.
 
-The member workspace does not read or write the original demo's localStorage. Old demo content is not automatically copied into any user's account. Memory means retained user-provided context; there is no AI training, retrieval across users, background research, or live AI processing.
+The member workspace does not read or write the demo’s IndexedDB or legacy localStorage. Old demo content is not automatically copied into any user's account. Memory means retained user-provided context; there is no AI training, retrieval across users, background research, or live AI processing.
 
 ## Requirements to configure securely
 
@@ -31,7 +31,7 @@ If you also configure this inside a restricted Codex cloud environment, outbound
 Configuration belongs in a local **.env.local** file on your Mac, or secret settings in a future hosting service. Never paste secrets into chat, commit them to GitHub, put them in screenshots, or use `NEXT_PUBLIC_` names for server secrets.
 
 1. Copy `.env.example` to `.env.local` in the project folder. Keep the existing disabled switches until the remaining setup is complete.
-2. In Supabase, create a dedicated test project. Open its SQL editor and execute the complete contents of `supabase/migrations/001_private_membership.sql` once. The migration uses Supabase's built-in `auth.users` and `auth.uid()`. It is transactional; it is not intended to be rerun after success.
+2. In Supabase, create a dedicated test project. Open its SQL editor and execute the complete contents of `supabase/migrations/001_private_membership.sql` once, followed by `002_account_attachments.sql`. For a project that already has migration 001, apply only 002. The migration uses Supabase's built-in `auth.users` and `auth.uid()`. It is transactional; it is not intended to be rerun after success.
 3. In Supabase Authentication settings, require email confirmation, set a suitable password policy, and set the site URL to your app origin. For local testing that is `http://localhost:3000`. Allow `http://localhost:3000/auth/callback` as a redirect. Set up production transactional email, abuse protection and recovery before real customers; the current UI does not yet include password recovery.
 4. Find the project's URL and publishable key in its connection/API settings. Put them into `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Put its server-only **service role key** in `SUPABASE_SERVICE_ROLE_KEY`. This privileged key is used only by the verified billing webhook. Workspace loads/saves never use it. This implementation does not use Supabase secret-key placeholders through a proxy; actual runtime configuration must be set securely.
 5. In Stripe **test mode**, create a product and a recurring paid price. Put its `price_...` identifier in `STRIPE_PRICE_ID`. Set `STRIPE_SECRET_KEY` to your test secret key. Never use actual payment details in test mode.

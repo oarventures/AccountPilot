@@ -37,6 +37,7 @@ export function validData(value: unknown): value is Demo {
     d.journal.every(
       (j) =>
         j &&
+        (j.accountId === undefined || typeof j.accountId === "string") &&
         ["id", "date", "company", "decision", "outcome"].every(
           (k) => typeof j[k as "id"] === "string",
         ),
