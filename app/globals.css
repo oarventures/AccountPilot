@@ -1076,3 +1076,47 @@ aside {
 .account-heading .row-actions .primary {
   padding: 10px 14px;
 }
+.getting-started {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+.workflow-steps button {
+  display: flex;
+  text-align: left;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8faf5;
+  font-size: 12px;
+}
+.workflow-steps b {
+  font-family: Georgia, serif;
+  color: #81976e;
+  font-size: 22px;
+}
+.workflow-steps small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.workflow-steps span {
+  flex: 1;
+}
+.decision-card {
+  border-top: 3px solid #809b70;
+}
+@media (max-width: 760px) {
+  .workflow-steps {
+    grid-template-columns: 1fr;
+  }
+}

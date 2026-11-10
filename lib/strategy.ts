@@ -91,7 +91,30 @@ export function actionPlan(
   const top = rank(opportunities, profile)[0];
   if (!top) return [];
   const account = context?.accounts.find((a) => a.id === top.accountId);
-  const person = account?.people[0];
+  if (account?.decision === "Pause")
+    return [
+      {
+        week: "01",
+        title: "Respect the pause decision",
+        text: `${account.name}: ${account.decisionReason || "Founder chose to pause pursuit."} Do not initiate active pursuit from this plan.`,
+      },
+      {
+        week: "02",
+        title: "Close a specific evidence gap",
+        text: "Review existing notes for the missing information that would change the decision. Do not invent new account facts.",
+      },
+      {
+        week: "03",
+        title: "Protect your capacity",
+        text: "Keep pursuit time available for other accounts until the founder explicitly changes this decision.",
+      },
+      {
+        week: "04",
+        title: "Revisit the decision",
+        text: `Review ${account.name}${account.reviewDate ? " on " + account.reviewDate : " when useful new evidence arrives"}. Record the outcome before deciding whether to pursue again.`,
+      },
+    ];
+  const person = account?.people.find((p) => p.id === account.primaryContactId);
   const fits =
     profile.capacity > 0 && top.effort > 0 && top.effort <= profile.capacity;
   return [

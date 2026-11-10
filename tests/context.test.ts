@@ -166,6 +166,7 @@ test("contextual action plan uses only saved founder judgments and keeps capacit
       authority: "Unknown",
     },
   ];
+  a.primaryContactId = "p";
   const plan = actionPlan(data.opportunities, data.profile, data.context);
   assert.match(plan[0].text, /Founder-entered next action/);
   assert.match(plan[1].text, /Fictional Pat/);
@@ -178,4 +179,91 @@ test("contextual action plan uses only saved founder judgments and keeps capacit
   );
   assert.equal(constrained[2].title, "Right-size the commitment");
   assert.match(constrained[2].text, /Reduce scope/);
+});
+
+test("account decisions update the account and append an immutable journal entry", async () => {
+  const { recordAccountDecision } = await import("../lib/context");
+  const data = migrateDemo(seed());
+  const before = JSON.stringify(data);
+  const next = recordAccountDecision(
+    data,
+    "north",
+    "Pause",
+    "No budget owner confirmed",
+    "2026-12-01",
+    "2026-11-09T00:00:00Z",
+    "decision-1",
+  );
+  assert.equal(JSON.stringify(data), before);
+  assert.equal(next.context!.accounts[0].decision, "Pause");
+  assert.equal(next.journal[0].id, "decision-1");
+  assert.match(next.journal[0].decision, /No budget owner/);
+  assert.equal(next.journal[0].outcome, "");
+  assert.throws(() =>
+    recordAccountDecision(data, "north", "Pursue", " ", "", "now", "x"),
+  );
+  assert.throws(() =>
+    recordAccountDecision(data, "missing", "Pursue", "Reason", "", "now", "x"),
+  );
+});
+test("a recorded pause overrides active outreach in the action plan", async () => {
+  const { actionPlan } = await import("../lib/strategy");
+  const data = migrateDemo(seed());
+  data.context!.accounts[0].decision = "Pause";
+  data.context!.accounts[0].decisionReason = "No owner";
+  const plan = actionPlan(data.opportunities, data.profile, data.context);
+  assert.equal(plan[0].title, "Respect the pause decision");
+  assert.match(plan[0].text, /Do not initiate active pursuit/);
+  assert.match(plan[2].text, /until the founder explicitly changes/);
+});
+test("adding stakeholders does not silently select a target", () => {
+  const data = migrateDemo(seed());
+  const a = data.context!.accounts[0];
+  a.people = [
+    {
+      id: "a",
+      name: "Person A",
+      role: "Unknown",
+      path: "Unknown",
+      authority: "Unknown",
+    },
+  ];
+  const result = brief(
+    a,
+    data.context!.solution,
+    data.opportunities,
+    data.profile,
+  );
+  assert.equal(result.primaryContact, undefined);
+  assert.ok(
+    result.questions.some((q) => q.startsWith("Choose the next contact")),
+  );
+  a.primaryContactId = "a";
+  assert.equal(
+    brief(a, data.context!.solution, data.opportunities, data.profile)
+      .primaryContact?.name,
+    "Person A",
+  );
+});
+test("exported brief retains source distinctions and excludes attached file payloads", async () => {
+  const { exportBrief } = await import("../lib/context");
+  const data = migrateDemo(seed());
+  const a = data.context!.accounts[0];
+  a.evidence = [
+    {
+      id: "x",
+      kind: "Founder interpretation",
+      topic: "Solution fit",
+      statement: "A hypothesis",
+      source: "Fictional founder note",
+      date: "2026-11-01",
+      quote: "Example passage",
+      documentId: "",
+    },
+  ];
+  const text = exportBrief(a, data.context!.solution);
+  assert.match(text, /Founder interpretation/);
+  assert.match(text, /Fictional founder note/);
+  assert.match(text, /Not selected; do not infer/);
+  assert.doesNotMatch(text, /base64/);
 });

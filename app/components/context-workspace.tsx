@@ -13,6 +13,9 @@ import {
   blankAccount,
   brief,
   initializeContext,
+  exportBrief,
+  recordAccountDecision,
+  AccountDecision,
 } from "@/lib/context";
 const uid = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -411,6 +414,136 @@ export default function ContextWorkspace({
                   </button>
                 </div>
               </div>
+              <section className="card form-card decision-card">
+                <div className="section-title">
+                  <div>
+                    <h2>Your decision and next contact</h2>
+                    <p>
+                      Current decision:{" "}
+                      <strong>{account.decision || "Undecided"}</strong>
+                      {account.reviewDate
+                        ? ` · Review on ${account.reviewDate}`
+                        : " · No review date set"}
+                    </p>
+                  </div>
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      const url = URL.createObjectURL(
+                        new Blob([exportBrief(account, context.solution)], {
+                          type: "text/markdown;charset=utf-8",
+                        }),
+                      );
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${account.name.replace(/[^a-z0-9-]/gi, "-")}-brief.md`;
+                      a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    }}
+                  >
+                    Download account brief
+                  </button>
+                </div>
+                <label className="account-select">
+                  Chosen next contact
+                  <select
+                    aria-label="Chosen next contact"
+                    value={account.primaryContactId || ""}
+                    onChange={(e) =>
+                      updateAccount({
+                        ...account,
+                        primaryContactId: e.target.value,
+                        reviewed: "",
+                      })
+                    }
+                  >
+                    <option value="">
+                      Not selected — needs founder judgment
+                    </option>
+                    {account.people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} · {p.role || "Role unknown"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <form
+                  key={
+                    account.id +
+                    account.decision +
+                    account.decisionReason +
+                    account.reviewDate
+                  }
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const f = new FormData(e.currentTarget);
+                    try {
+                      onChange(
+                        recordAccountDecision(
+                          data,
+                          account.id,
+                          String(f.get("decision")) as AccountDecision,
+                          String(f.get("reason")),
+                          String(f.get("reviewDate")),
+                          new Date().toISOString(),
+                          uid(),
+                        ),
+                      );
+                      setNotice(
+                        "Decision saved and recorded in your journal. Review dates are reminders for you, not automatic notifications.",
+                      );
+                    } catch (error) {
+                      setNotice(
+                        error instanceof Error
+                          ? error.message
+                          : "Could not record decision.",
+                      );
+                    }
+                  }}
+                >
+                  <div className="form-grid">
+                    <label>
+                      Pursuit decision
+                      <select
+                        aria-label="Pursuit decision"
+                        name="decision"
+                        defaultValue={
+                          account.decision === "Undecided"
+                            ? ""
+                            : account.decision || ""
+                        }
+                        required
+                      >
+                        <option value="" disabled>
+                          Choose your decision
+                        </option>
+                        <option>Pursue</option>
+                        <option>Nurture</option>
+                        <option>Pause</option>
+                      </select>
+                    </label>
+                    <label>
+                      Review date (optional)
+                      <input
+                        type="date"
+                        name="reviewDate"
+                        defaultValue={account.reviewDate || ""}
+                      />
+                    </label>
+                    <label className="full">
+                      Reason for this decision
+                      <textarea
+                        aria-label="Reason for this decision"
+                        name="reason"
+                        required
+                        maxLength={4000}
+                        defaultValue={account.decisionReason || ""}
+                      />
+                    </label>
+                  </div>
+                  <button className="primary">Save decision to journal</button>
+                </form>
+              </section>
               {mode === "plan" ? (
                 <>
                   <section className="card form-card">
@@ -682,6 +815,10 @@ export default function ContextWorkspace({
                             if (confirm("Remove this stakeholder?"))
                               updateAccount({
                                 ...account,
+                                primaryContactId:
+                                  account.primaryContactId === p.id
+                                    ? ""
+                                    : account.primaryContactId,
                                 people: account.people.filter(
                                   (x) => x.id !== p.id,
                                 ),

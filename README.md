@@ -1,5 +1,7 @@
 # AccountPilot
 
+**Start here:** [START-HERE.md](START-HERE.md). The Mac launchers install/start the demo and update a GitHub clone without repeated terminal commands.
+
 A safe, fictional sales strategy demo for founders of small, relationship-driven B2B businesses. Built with Next.js App Router, TypeScript, React, and Tailwind CSS. No account, database, AI service, payment, scraping, or external integration is implemented.
 
 For the new solution-context, account-plan, and strategic-brief workflow, see [UPDATE-ON-MAC.md](UPDATE-ON-MAC.md). It includes exact steps to move from your old ZIP copy to a GitHub-managed local copy.
@@ -37,6 +39,8 @@ Stop a server with Ctrl+C. No environment variables or secrets are required, so 
 - Record decisions and update their outcomes later.
 - Maintain solution context and attachments, account-specific research and plans, stakeholder maps, evidence with sources, and founder-reviewed strategic briefs.
 - Link multiple opportunities to an account and capture brief snapshots in the decision journal.
+- Explicitly select the next contact; record pursue/nurture/pause decisions and review dates; download account briefs.
+- Launch and update locally with Start AccountPilot.command and Update AccountPilot.command.
 - Reset the demo to its four fictional examples. Reset removes context and attachments too; reset and deletion require confirmation.
 
 ## How PILOT works
@@ -65,7 +69,7 @@ Storage failures show a visible notice; in that case edits remain temporary. Uns
 
 ## Validation and short test plan
 
-`npm test` runs 19 unit tests covering context migration, account linking, evidence separation, attachment constraints, contextual action plans, and the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
+`npm test` runs 26 unit tests covering context migration, account linking, evidence separation, attachment constraints, contextual action plans, and the documented weighted calculation, unknown inputs, zero denominators, bounded ratings, missing effort, nonfinite ratings, deterministic ties, empty plans, constrained capacity, and confidence versus score.
 
 Manual / browser smoke checklist:
 

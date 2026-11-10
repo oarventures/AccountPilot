@@ -6,8 +6,10 @@
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
-    "test": "tsx --test tests/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "launch": "node scripts/local.mjs start",
+    "update": "node scripts/local.mjs update"
   },
   "dependencies": {
     "next": "16.4.5",

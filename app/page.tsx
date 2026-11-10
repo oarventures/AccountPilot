@@ -117,6 +117,9 @@ export default function Home() {
   }, [data, ready, storageOK]);
   const ranked = rank(data.opportunities, data.profile);
   const plan = actionPlan(data.opportunities, data.profile, data.context);
+  const topAccount = data.context?.accounts.find(
+    (a) => a.id === ranked[0]?.accountId,
+  );
   const total = data.opportunities.reduce((a, o) => a + o.value, 0);
   function reset() {
     if (
@@ -276,6 +279,60 @@ export default function Home() {
                 <>
                   {tab === "Overview" && (
                     <>
+                      <section className="getting-started card">
+                        <div>
+                          <div className="eyebrow">
+                            YOUR ACCOUNT STRATEGY WORKFLOW
+                          </div>
+                          <h2>Turn context into your next decision.</h2>
+                          <p className="muted">
+                            Start with your solution, build an account plan,
+                            then review evidence and choose a next step.
+                            Fictional information only.
+                          </p>
+                        </div>
+                        <div className="workflow-steps">
+                          <button onClick={() => setTab("Solution context")}>
+                            <b>01</b>
+                            <span>
+                              Describe your solution
+                              <small>
+                                {data.context?.solution.benefits
+                                  ? "Context started"
+                                  : "Add benefits and ideal customer"}
+                              </small>
+                            </span>
+                            →
+                          </button>
+                          <button onClick={() => setTab("Accounts & briefs")}>
+                            <b>02</b>
+                            <span>
+                              Build an account plan
+                              <small>
+                                {data.context?.accounts.filter(
+                                  (a) => a.hypothesis,
+                                ).length || 0}{" "}
+                                accounts with hypotheses
+                              </small>
+                            </span>
+                            →
+                          </button>
+                          <button onClick={() => setTab("Accounts & briefs")}>
+                            <b>03</b>
+                            <span>
+                              Choose and review a decision
+                              <small>
+                                {data.context?.accounts.filter(
+                                  (a) =>
+                                    a.decision && a.decision !== "Undecided",
+                                ).length || 0}{" "}
+                                recorded account decisions
+                              </small>
+                            </span>
+                            →
+                          </button>
+                        </div>
+                      </section>
                       <div className="stats">
                         <div>
                           <span>
@@ -319,12 +376,14 @@ export default function Home() {
                           <span className="eyebrow">PILOT BRIEFING</span>
                           <h2>
                             {ranked[0]
-                              ? `Start with ${ranked[0].company}.`
+                              ? topAccount?.decision === "Pause"
+                                ? `Pursuit paused: ${ranked[0].company}.`
+                                : `Start with ${ranked[0].company}.`
                               : "Your next chapter starts with a conversation."}
                           </h2>
                           <p>
                             {ranked[0]
-                              ? `It ranks highest against your current inputs. ${ranked[0].analysis.gaps.length ? "Close the evidence gaps before committing." : "Validate your assumptions in the next conversation."}`
+                              ? `${topAccount?.decision === "Pause" ? "Your pause decision takes precedence over its score." : "It ranks highest against your current inputs."} ${ranked[0].analysis.gaps.length ? "Close the evidence gaps before committing." : "Validate your assumptions in the next conversation."}`
                               : "Add a fictional opportunity to see a transparent recommendation."}
                           </p>
                         </div>

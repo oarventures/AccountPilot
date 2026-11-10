@@ -1,5 +1,7 @@
 # Get the account-context update on your Mac
 
+**Simpler setup and future updates:** follow [START-HERE.md](START-HERE.md) to use the new Mac launchers. The detailed manual workflow below is retained for reference.
+
 ## What changed
 
 - **Solution context** holds your offering overview, benefits, ideal customer, differentiators, proof points, limitations, and one-pagers.

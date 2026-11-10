@@ -33,7 +33,12 @@ export type Stakeholder = {
   path: string;
   authority: string;
 };
+export type AccountDecision = "Undecided" | "Pursue" | "Nurture" | "Pause";
 export type Account = {
+  primaryContactId?: string;
+  decision?: AccountDecision;
+  decisionReason?: string;
+  reviewDate?: string;
   id: string;
   name: string;
   whyAccount: string;
@@ -73,6 +78,10 @@ export function blankAccount(id: string, name: string): Account {
     evidence: [],
     people: [],
     reviewed: "",
+    primaryContactId: "",
+    decision: "Undecided",
+    decisionReason: "",
+    reviewDate: "",
   };
 }
 export function initializeContext(data: Demo): Context {
@@ -124,6 +133,13 @@ export function brief(
     );
   if (!account.whyNow.trim())
     questions.push("Is there a confirmed trigger or buying window?");
+  const primaryContact = account.people.find(
+    (p) => p.id === account.primaryContactId,
+  );
+  if (account.people.length && !primaryContact)
+    questions.push(
+      "Choose the next contact explicitly; adding a person does not make them the target.",
+    );
   if (!account.people.length)
     questions.push("Who owns the problem, and how can you reach them?");
   if (!account.hypothesis.trim())
@@ -164,6 +180,7 @@ export function brief(
     );
   return {
     linked,
+    primaryContact,
     questions,
     documented: account.evidence.filter(
       (e) => e.kind === "Documented information",
@@ -218,6 +235,16 @@ export function validContext(v: unknown): v is Context {
     v.accounts.every(
       (a) =>
         object(a) &&
+        (a.primaryContactId === undefined ||
+          typeof a.primaryContactId === "string") &&
+        (a.decision === undefined ||
+          (typeof a.decision === "string" &&
+            ["Undecided", "Pursue", "Nurture", "Pause"].includes(
+              a.decision,
+            ))) &&
+        (a.decisionReason === undefined ||
+          typeof a.decisionReason === "string") &&
+        (a.reviewDate === undefined || typeof a.reviewDate === "string") &&
         strings(a, [
           "id",
           "name",
@@ -322,4 +349,62 @@ export function saveOpportunity(data: Demo, opportunity: Opportunity): Demo {
       { ...opportunity, company: name, accountId: account.id },
     ],
   };
+}
+
+export function recordAccountDecision(
+  data: Demo,
+  accountId: string,
+  decision: AccountDecision,
+  reason: string,
+  reviewDate: string,
+  now: string,
+  id: string,
+): Demo {
+  const current = migrateDemo(data);
+  const account = current.context!.accounts.find((a) => a.id === accountId);
+  if (!account) throw new Error("Select an existing account.");
+  if (!["Pursue", "Nurture", "Pause"].includes(decision) || !reason.trim())
+    throw new Error("Choose pursue, nurture, or pause and record your reason.");
+  return {
+    ...current,
+    context: {
+      ...current.context!,
+      accounts: current.context!.accounts.map((a) =>
+        a.id === accountId
+          ? {
+              ...a,
+              decision,
+              decisionReason: reason.trim(),
+              reviewDate,
+              reviewed: now,
+            }
+          : a,
+      ),
+    },
+    journal: [
+      {
+        id,
+        date: now,
+        company: account.name,
+        decision: `${decision} — ${reason.trim()}\nNext action: ${account.nextAction || "Not recorded"}\nReview date: ${reviewDate || "Not scheduled"}`,
+        outcome: "",
+      },
+      ...current.journal,
+    ],
+  };
+}
+export function exportBrief(account: Account, solution: Solution): string {
+  const documents = [...solution.documents, ...account.documents];
+  const contact = account.people.find((p) => p.id === account.primaryContactId);
+  return [
+    `# ${account.name} — AccountPilot brief`,
+    "Demo only. Founder-entered information; not independently verified. No AI synthesis.",
+    `## Decision\n${account.decision || "Undecided"}\n${account.decisionReason || "No reason recorded"}\nReview date: ${account.reviewDate || "Not scheduled"}`,
+    `## Solution context\nOverview: ${solution.overview || "Not recorded"}\nBenefits: ${solution.benefits || "Not recorded"}\nIdeal customer: ${solution.idealCustomer || "Not recorded"}\nDifferentiators: ${solution.differentiators || "Not recorded"}\nProof: ${solution.proof || "Not recorded"}\nLimitations: ${solution.limitations || "Not recorded"}`,
+    ...accountFields.map(
+      ([key, label]) => `## ${label}\n${account[key] || "Not recorded"}`,
+    ),
+    `## Selected next contact\n${contact ? `${contact.name} — ${contact.role || "Role unknown"}\nAccess: ${contact.path || "Unknown"}\nAuthority: ${contact.authority || "Unknown"}` : "Not selected; do not infer a target."}`,
+    `## Evidence, interpretations and questions\n${account.evidence.length ? account.evidence.map((e) => `### ${e.kind} — ${e.topic}\n${e.statement}\nSource: ${e.source || "Not recorded"}; date: ${e.date || "Not recorded"}${e.documentId ? "\nAttachment: " + (documents.find((d) => d.id === e.documentId)?.name || "Unavailable") : ""}${e.quote ? "\nFounder-entered passage (verify source): " + e.quote : ""}`).join("\n\n") : "No entries recorded."}`,
+  ].join("\n\n");
 }
